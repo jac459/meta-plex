@@ -40,6 +40,8 @@
             "JustKey":"",
             "RatingKey":"",
             "LibraryKey":"",
+            "LibraryAlbumKey":"",
+            "LibraryPlayableKey":"",
             "MediaKey":"",
             "ContainerKey":"",
             "BaseImageURL_":"https://raw.githubusercontent.com/jac459/meta-plex/main/pics/",
@@ -47,8 +49,16 @@
             "PlayQueueID":"",
             "ClientId":"DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").clientIdentifier DYNAMIK_INST_END",
             "ServerId":"DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").serverId DYNAMIK_INST_END",
+            "Offset": 0,
+            "ListType" : "",
             "ItemImage": "",
+            "ItemPlayableImage": "",
+            "ItemAlbumImage": "",
+            "ItemDetailImage": "",
+            "DisplayedPlayed": "",
+            "DisplayedImage": "",
             "ItemTitle": "",
+            "ItemType": "",
             "ItemTagLine": "",
             "ItemSummary": "",
             "CommandId": "1",
@@ -56,6 +66,7 @@
             "VolumeSaved": "",
             "Duration": "",
             "AlbumArt": "",
+            "PlayedKey": "",
             "InputName": "",
             "MyStatus": "",
             "MyState": "",
@@ -64,19 +75,26 @@
             "CurrentDuration": "",
             "ActionStatus": ""
         },
+        "images": {
+            "AlbumCover": {"label": "", "size": "large", "listen": "DisplayedImage"} 
+          },  
         "listeners" : {
-            "PlexInitialise" : {"type":"http-rest", "ishub":false, "command":"DYNAMIK let ps = $MyPlexServer; let com = {\"verb\":\"get\",\"call\":\"\", \"headers\":{\"Accept\":\"application/json\"}}; com.call = \"http://\" + ps.ip + \":\" + ps.port + \"/clients?X-Plex-Token=\" + ps.token; JSON.stringify(com);", "queryresult":["$.MediaContainer.Server[?(@.name&&@.platform)]"], "evalwrite":[{"variable":"PlexServer","value":"DYNAMIK let myPlexServer = $MyPlexServer; myPlexServer.clients = JSON.parse(\"$Result\"); JSON.stringify(myPlexServer);"}], "pooltime":"30000", "poolduration":""},
-            "PlexSubscribe" : {"type":"http-rest", "ishub":false, "command":"{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/timeline/subscribe?port=$PlexPort&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "pooltime":"3000", "poolduration":"", "queryresult" : "$."
-            },
-            "PlexStatus" : {"type":"http-rest", "ishub":true, "command":"{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/timeline/poll?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&type=video&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "pooltime":"3000", "poolduration":"", "queryresult" : "$.[?(@property === \"machineIdentifier\" && @ === \"$ServerId\")]^", 
-              "evalwrite" : [ 
-                {"variable": "CommandId","value":"DYNAMIK Number($CommandId)+1"},
-                {"variable": "Duration","value":"DYNAMIK let dur = JSON.parse(\"$Result\")[0].duration; dur ? dur : 1;"},
-                {"variable": "ContainerKey","value":"DYNAMIK let ck = JSON.parse(\"$Result\")[0].containerKey; let numQueue = Number(ck.split(\"/\")[2]); numQueue= numQueue+1; \"/playQueues/\" + numQueue;"},
-                {"variable": "VolumePlayed", "value" : "DYNAMIK JSON.parse(\"$Result\")[0].volume"},
-                {"variable": "IsPlaying", "value" : "DYNAMIK if (JSON.parse(\"$Result\")[0].state == \"playing\") {true;} else {false;}"},
-                {"variable": "Progress", "value" : "DYNAMIK let tim = JSON.parse(\"$Result\")[0].time; tim ? Math.round(100*Number(JSON.parse(\"$Result\")[0].time)/Number($Duration)) : 0"}
-              ]
+            "PlexInitialise" : {"type":"http-rest", "ishub":true, "command":"DYNAMIK let ps = $MyPlexServer; let com = {\"verb\":\"get\",\"call\":\"\", \"headers\":{\"Accept\":\"application/json\"}}; com.call = \"http://\" + ps.ip + \":\" + ps.port + \"/clients?X-Plex-Token=\" + ps.token; JSON.stringify(com);", "queryresult":["$.MediaContainer.Server[?(@.name&&@.platform)]"], "evalwrite":[{"variable":"PlexServer","value":"DYNAMIK let myPlexServer = $MyPlexServer; myPlexServer.clients = JSON.parse(\"$Result\"); JSON.stringify(myPlexServer);"}], "pooltime":"30000", "poolduration":""},
+            "PlexSubscribe" : {"type":"http-rest", "ishub":true, "command":"{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/timeline/subscribe?port=$PlexPort&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "pooltime":"30000", "poolduration":"", "queryresult" : "$."
+                },
+            "PlexStatus" : {"type":"http-rest", "ishub":true, "command":"{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/timeline/poll?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "pooltime":"3000", "poolduration":"", "queryresult" : "$.[?(@property === \"machineIdentifier\" && @ === \"$ServerId\")]^", 
+                "evalwrite" : [ 
+                    {"variable": "CommandId","value":"DYNAMIK Number($CommandId)+1"},
+                    {"variable": "Duration","value":"DYNAMIK if (JSON.parse(\"$Result\")[0]) {let dur = JSON.parse(\"$Result\")[0].duration; dur ? dur : 1;} else {\"$Duration\"}"},
+                    {"variable": "ContainerKey","value":"DYNAMIK if (JSON.parse(\"$Result\")[0]) {let ck = JSON.parse(\"$Result\")[0].containerKey; if (ck) {let numQueue = Number(ck.split(\"/\")[2]); numQueue= numQueue+1; \"/playQueues/\" + numQueue;}}"},
+                    {"variable": "PlayedKey","value":"DYNAMIK if (JSON.parse(\"$Result\")[0]) {JSON.parse(\"$Result\")[0].key;}"},
+                    {"variable": "VolumePlayed", "value" : "DYNAMIK if (JSON.parse(\"$Result\")[0]) {JSON.parse(\"$Result\")[0].volume} else {\"$VolumePlayed\"}"},
+                    {"variable": "IsPlaying", "value" : "DYNAMIK if (JSON.parse(\"$Result\")[0]) {if (JSON.parse(\"$Result\")[0].state == \"playing\") {true;} else {false;}} else {false}"},
+                    {"variable": "Progress", "value" : "DYNAMIK if (JSON.parse(\"$Result\")[0]) {let tim = JSON.parse(\"$Result\")[0].time; tim ? Math.round(100*Number(JSON.parse(\"$Result\")[0].time)/Number($Duration)) : 0} else {\"0\"}"}
+                ],
+                "evaldo" : [ 
+                    {"test":"DYNAMIK if (JSON.parse(\"$Result\")[0] && JSON.parse(\"$Result\")[0].key) {true;} else {false;}", "then":"GETPLAYEDDATA"}
+                ]
             }
           },
         "sliders": {
@@ -84,7 +102,7 @@
             "PROGRESS": {"unit": "%", "listen": "Progress", "evaldo": [{"test": true, "then": "__PROGRESSSET", "or": ""}]}
         },
         "labels":{
-            "CurrentStatus" : {"label":".", "actionlisten":"MyStatus", "listen":"MyState"}
+            "CurrentStatus" : {"label":".", "actionlisten":"", "listen":"DisplayedPlayed"}
         },
         "buttons": {
             "POWER ON": {"label": "", "type": "static", "command": ".", "evaldo":[{"test":true, "then":"__INITIALISE", "or":""}]},
@@ -102,8 +120,13 @@
             "CURSOR DOWN": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/moveDown?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "CURSOR ENTER": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/select?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "BACK": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/back?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},      
-  
-            "__PLAYMEDIA": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/playback/playMedia?protocol=http&address=$PlexIp&port=$PlexPort&key=/library/metadata/$PlayQueueSelectedMetadataItemID&containerKey=/playQueues/$PlayQueueID&type=video&offset=0&machineIdentifier=$ServerId&commandID=$CommandId&token=$PlexToken\", \"headers\":{\"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\"}}"},
+
+            "GETPLAYEDDATA": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexPrefix$PlayedKey?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*", "evalwrite":[
+                {"variable":"DisplayedPlayed","value":"DYNAMIK let beg = JSON.parse(\"$Result\").title + \" - \"; let end = (JSON.parse(\"$Result\").type != \"track\") ? (JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary) : JSON.parse(\"$Result\").grandparentTitle; beg + end;"},
+                {"variable":"DisplayedImage","value":"DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}
+            ]},      
+         
+            "__PLAYMEDIA": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/playback/playMedia?protocol=http&address=$PlexIp&port=$PlexPort&key=/library/metadata/$PlayQueueSelectedMetadataItemID&containerKey=/playQueues/$PlayQueueID&mediaIndex=1&type=$ItemType&offset=$Offset&machineIdentifier=$ServerId&commandID=$CommandId&token=$PlexToken\", \"headers\":{\"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\"}}"},
             "__VOLUMESET": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/playback/setParameters?volume=$VolumePlayed&address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&type=video&protocol=http&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "__MUTESET": {"label":"", "type":"mqtt", "command":"DYNAMIK let op = $Output; let mess ={\"transport\":{\"output\":op, \"volume\":{\"is_muted\":$Muted}}}; let toSend = {\"topic\":\"meta/roon\", \"message\":\"\"}; toSend.message = mess; toSend;"},
             "__PROGRESSSET": {"label": "", "type": "http-rest", "command": "DYNAMIK let Pr = Math.round($Progress*Number($Duration)/100); let finalCall = {\"verb\":\"get\",\"call\":\"\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexDeviceName\"}}; finalCall.call = \"$PlexClientPrefix/player/playback/seekTo?offset=\" + Pr + \"&address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&type=video&protocol=http&commandID=$CommandId&$PlexSuffix\"; finalCall;", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]}
@@ -115,34 +138,77 @@
                 "feeders": {
                     "Browse": {"label": "Choose your library", "commandset":[
                         {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$BaseImageURL_plex-226049.jpg"},
-                        {"type":"static", "command":[{"name":"Quick Access, 'On Deck'"}], "itemtype":"button", "itemUI":true, "queryresult":"$.*", "itemname":"DYNAMIK JSON.parse(\"$Result\").name"}, 
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/onDeck?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata[:2]", "itemtype":"tile", "itemaction": "Set", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}]},
-                        {"type":"static", "command":[], "itemname":"Recently Added", "itemlabel":"Recently Added Items","itemimage":"$BaseImageURL_Ticket_icon-icons.com_54128.jpg", "evalnext":[{"test":true, "then":"RecentlyAdded"}]}, 
-                        {"type":"static", "command":[], "itemname":"On Deck", "itemlabel":"On going items, new episodes...","itemimage":"$BaseImageURL_Novel_icon-icons.com_54157.jpg", "evalnext":[{"test":true, "then":"OnDeck"}]}, 
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/sections?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Directory.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").scanner", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").title == \"Movies\") {\"$BaseImageURL_Clapperboard_icon-icons.com_54196.jpg\"} else if (JSON.parse(\"$Result\").title == \"TV Shows\") {\"$BaseImageURL_TV_icon-icons.com_54127.jpg\"};", "evalwrite": [{"variable": "LibraryKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ContainerKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}], "evalnext":[{"test":true, "then":"Browse2"}]}
+                        {"type":"static", "command":[], "itemname":"Recently Added", "itemlabel":"Recently Added Items","itemimage":"$BaseImageURL_new.jpg", "evalnext":[{"test":true, "then":"RecentlyAdded"}]}, 
+                        {"type":"static", "command":[], "itemname":"On Deck", "itemlabel":"On going items, new episodes...","itemimage":"$BaseImageURL_ondeck.jpg", "evalnext":[{"test":true, "then":"OnDeck"}]}, 
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/sections?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Directory.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").scanner", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").title == \"Movies\") {\"$BaseImageURL_movies.jpg\"} else if (JSON.parse(\"$Result\").title == \"TV Shows\") {\"$BaseImageURL_TV.jpg\"} else if (JSON.parse(\"$Result\").title == \"Photos\") {\"$BaseImageURL_gallery.jpg\"} else if (JSON.parse(\"$Result\").title == \"Home Videos\") {\"$BaseImageURL_camcorder.jpg\"} else if (JSON.parse(\"$Result\").title == \"Music\") {\"$BaseImageURL_music.jpg\"};", "evalwrite": [{"variable": "LibraryKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ContainerKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ItemType", "value": "photo"}, {"variable": "ItemImage", "value": "DYNAMIK if (JSON.parse(\"$Result\").title == \"Movies\") {\"$BaseImageURL_movies.jpg\"} else if (JSON.parse(\"$Result\").title == \"TV Shows\") {\"$BaseImageURL_TV.jpg\"} else if (JSON.parse(\"$Result\").title == \"Photos\") {\"$BaseImageURL_gallery.jpg\"} else if (JSON.parse(\"$Result\").title == \"Home Videos\") {\"$BaseImageURL_camcorder.jpg\"} else if (JSON.parse(\"$Result\").title == \"Music\") {\"$BaseImageURL_music.jpg\"};"}], "evalnext":[{"test":"DYNAMIK JSON.parse(\"$Result\").title != \"Photos\"", "then":"BrowseList", "or":"BrowsePicture"}]}
                     ]},
-                    "Browse2": {"label": "DYNAMIK JSON.parse(\"$Result\").title", "commandset":[
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/sections/$LibraryKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").tagline", "itemaction": "Set", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}]}
+                    "BrowseList": {"label": "Library", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$ItemImage"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/sections/$LibraryKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {JSON.parse(\"$Result\").parentTitle} else {JSON.parse(\"$Result\").title}", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {JSON.parse(\"$Result\").title} else {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary}", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [
+                            {"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                            {"variable": "LibraryAlbumKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                            {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, 
+                            {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, 
+                            {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, 
+                            {"variable": "ItemAlbumImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, 
+                            {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, 
+                            {"variable": "ItemPlayableImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, 
+                            {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, 
+                            {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").tagline ? JSON.parse(\"$Result\").tagline : JSON.parse(\"$Result\").summary"}, 
+                            {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, 
+                            {"variable": "LibraryPlayableKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}
+                        ], "evalnext":[
+                            {"test":"DYNAMIK if (JSON.parse(\"$Result\").type == \"artist\") {true;} else {false;}", "then":"BrowseAlbumList", "or":""}, 
+                            {"test":"DYNAMIK if (JSON.parse(\"$Result\").parentTitle && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"BrowsePlayable", "or":""}, 
+                            {"test":"DYNAMIK if (!JSON.parse(\"$Result\").parentTitle && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"DetailView", "or":""}
+                            ]}
                     ]},
-                    "OnDeck": {"label": "DYNAMIK JSON.parse(\"$Result\").title", "commandset":[
-                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$BaseImageURL_Novel_icon-icons.com_54157.jpg"},
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/onDeck?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata[:2]", "itemtype":"tile", "itemaction": "Set", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}]},
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/onDeck?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").tagline", "itemaction": "Set", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}]}
+                    "BrowseAlbumList": {"label": "Library", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$ItemAlbumImage"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix$LibraryAlbumKey?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").parentTitle;", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", 
+                            "evalwrite": [
+                                {"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                                {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, 
+                                {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, 
+                                {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, 
+                                {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, 
+                                {"variable": "ItemPlayableImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, 
+                                {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, 
+                                {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").tagline ? JSON.parse(\"$Result\").tagline : JSON.parse(\"$Result\").summary"}, 
+                                {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, 
+                                {"variable": "LibraryPlayableKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}
+                            ], 
+                            "evalnext":[
+                                {"test":"DYNAMIK if (JSON.parse(\"$Result\").parentTitle || JSON.parse(\"$Result\").type == \"artist\") {true;} else {false;}", "then":"BrowsePlayable", "or":"DetailView"}
+                            ]}
                     ]},
-                    "RecentlyAdded": {"label": "DYNAMIK JSON.parse(\"$Result\").title", "commandset":[
-                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$BaseImageURL_Ticket_icon-icons.com_54128.jpg"},
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/recentlyAdded?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK JSON.parse(\"$Result\").tagline", "itemaction": "", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "ItemImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").tagline"}, {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}], "evalnext":[{"test":true, "then":"DetailView"}]}
+                    "BrowsePicture": {"label": "Library", "commandset":[
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/sections/$LibraryKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "itemtype":"tile", "itemaction":"Set", "queryresult": "$.MediaContainer.Metadata.*", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "Offset", "value": "0"}, {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}]}
                     ]},
-                    "DetailView": {"label": "DYNAMIK JSON.parse(\"$Result\").title", "commandset":[
-                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"Set", "itemUI":"","itemimage":"$ItemImage"},
-                        {"type":"static", "command":".","itemname": "$ItemTitle - $ItemTagLine","itemlabel": "$ItemSummary", "itemtype":"info"}
+                    "RecentlyAdded": {"label": "Recently added", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$BaseImageURL_new.jpg"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/recentlyAdded?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {JSON.parse(\"$Result\").parentTitle} else {JSON.parse(\"$Result\").title}", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {JSON.parse(\"$Result\").title} else {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary}", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, {"variable": "ItemPlayableImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").tagline ? JSON.parse(\"$Result\").tagline : JSON.parse(\"$Result\").summary"}, {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, {"variable": "LibraryPlayableKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}], "evalnext":[{"test":"DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {true;} else {false;}", "then":"BrowsePlayable", "or":"DetailView"}]}
+                    ]},                    
+                    "OnDeck": {"label": "On Deck", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$BaseImageURL_ondeck.jpg"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix/library/onDeck?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=http&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").parentTitle) {JSON.parse(\"$Result\").parentTitle + \" - \" + JSON.parse(\"$Result\").grandparentTitle} else {JSON.parse(\"$Result\").tagline ? JSON.parse(\"$Result\").tagline : JSON.parse(\"$Result\").summary}", "itemimage": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, {"variable": "ItemPlayableImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}, {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").tagline ? JSON.parse(\"$Result\").tagline : JSON.parse(\"$Result\").summary"}, {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, {"variable": "LibraryPlayableKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}], "evalnext":[{"test":true, "then":"DetailView", "or":""}]}
+                    ]},                    
+                    "BrowsePlayable": {"label": "Ready to play", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$ItemPlayableImage"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix$LibraryPlayableKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").type != \"track\") {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary} else {JSON.parse(\"$Result\").parentTitle}", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").thumb) {\"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"} else {\"$ItemPlayableImage\"}", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").parentTitle"}, {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}], "evalnext":[{"test":true, "then":"DetailView", "or":""}]}
+                    ]},
+                    "DetailView": {"label": "$ItemTitle", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"Set", "itemUI":"","itemimage":"$ItemDetailImage"},
+                        {"type":"static", "command":".","itemname": "$ItemTitle - $ItemTagLine","itemlabel": "$ItemSummary", "itemtype":"info"},
+                        {"type":"static", "command":".","itemname": "Play from start","itemimage":"$BaseImageURL_Play.jpg", "itemaction":"Set", "evalwrite":[{"variable": "Offset", "value": 0}]},
+                        {"type":"static", "command":".","itemname": "Resume","itemimage":"$BaseImageURL_Resume.jpg", "itemaction":"Set"}
                      ]},
                     "Set": {
                         "label": "",
                         "commandset": [
                             {
                                 "type": "http-rest",
-                                "command": "{\"verb\":\"post\",\"call\":\"$PlexClientPrefix/playQueues?type=video&shuffle=1&repeat=0&continuous=1&own=1&uri=server://$ServerId/com.plexapp.plugins.library/library/metadata/$RatingKey\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Token\":\"$PlexToken\"}}", "queryresult": "$.MediaContainer.", "evalwrite":[{"variable":"PlayQueueID","value":"DYNAMIK JSON.parse(\"$Result\")[0].playQueueID"}, {"variable":"PlayQueueSelectedMetadataItemID","value":"DYNAMIK JSON.parse(\"$Result\")[0].playQueueSelectedMetadataItemID"}], "evaldo":[{"test":true,"then":"__PLAYMEDIA", "or":""}]
+                                "command": "{\"verb\":\"post\",\"call\":\"$PlexClientPrefix/playQueues?type=video&shuffle=0&repeat=0&continuous=1&own=1&uri=server://$ServerId/com.plexapp.plugins.library/library/metadata/$RatingKey\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Token\":\"$PlexToken\"}}", "queryresult": "$.MediaContainer.", "evalwrite":[{"variable":"PlayQueueID","value":"DYNAMIK JSON.parse(\"$Result\")[0].playQueueID"}, {"variable":"PlayQueueSelectedMetadataItemID","value":"DYNAMIK JSON.parse(\"$Result\")[0].playQueueSelectedMetadataItemID"}], "evaldo":[{"test":true,"then":"__PLAYMEDIA", "or":""}]
                             }
                         ]
                     }
