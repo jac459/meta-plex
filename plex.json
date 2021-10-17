@@ -24,8 +24,8 @@
         "command": {"type": "static", "command": "DYNAMIK let duplicatePs = $PlexServer;let ps = []; duplicatePs.clients.forEach((dps) => { if (ps.findIndex((psi)=>{return psi.clientIdentifier == dps.clientIdentifier}) < 0) {ps.push(dps)}}) ; ps.forEach((dev)=>{dev.serverAddress = duplicatePs.ip; if (dev.address == \"127.0.0.1\") {dev.address = duplicatePs.ip}; dev.serverPort = duplicatePs.port;dev.token = duplicatePs.token; dev.serverId = duplicatePs.id}); JSON.stringify(ps);", "queryresult": "$.*"}
     },
     "template": {
-        "dynamicname": "DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").name + \" - \" + JSON.parse(\"$Result\").platform + \" - \" + JSON.parse(\"$Result\").id DYNAMIK_INST_END",
-        "dynamicid": "DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").clientIdentifier + \" - \" + JSON.parse(\"$Result\").id DYNAMIK_INST_END",
+        "dynamicname": "DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").name + \" - \" + JSON.parse(\"$Result\").platform DYNAMIK_INST_END",
+        "dynamicid": "DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").clientIdentifier DYNAMIK_INST_END",
         "variables": {
             "MyPlexServer": "DYNAMIK_INST_START DYNAMIK let ps = $PlexServer; ps = JSON.stringify(JSON.stringify(ps)); ps.substring(1, ps.length-1); DYNAMIK_INST_END",
             "PlexToken": "DYNAMIK_INST_START DYNAMIK JSON.parse(\"$Result\").token DYNAMIK_INST_END",
@@ -38,6 +38,7 @@
             "PlexPrefix":"DYNAMIK_INST_START DYNAMIK \"http://\" + JSON.parse(\"$Result\").serverAddress + \":\" + JSON.parse(\"$Result\").serverPort DYNAMIK_INST_END",
             "PlexSuffix":"DYNAMIK_INST_START DYNAMIK \"X-Plex-Token=\" + JSON.parse(\"$Result\").token DYNAMIK_INST_END",
             "JustKey":"",
+            "SecondNavKey":"",
             "RatingKey":"",
             "LibraryKey":"",
             "LibraryAlbumKey":"",
@@ -159,8 +160,8 @@
                             {"variable": "LibraryPlayableKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}
                         ], "evalnext":[
                             {"test":"DYNAMIK if (JSON.parse(\"$Result\").type == \"artist\") {true;} else {false;}", "then":"BrowseAlbumList", "or":""}, 
-                            {"test":"DYNAMIK if (JSON.parse(\"$Result\").parentTitle && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"BrowsePlayable", "or":""}, 
-                            {"test":"DYNAMIK if (!JSON.parse(\"$Result\").parentTitle && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"DetailView", "or":""}
+                            {"test":"DYNAMIK if (JSON.parse(\"$Result\").key.endsWith(\"children\") && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"BrowsePlayable", "or":""}, 
+                            {"test":"DYNAMIK if (!JSON.parse(\"$Result\").key.endsWith(\"children\") && JSON.parse(\"$Result\").type != \"artist\") {true;} else {false;}", "then":"DetailView", "or":""}
                             ]}
                     ]},
                     "BrowseAlbumList": {"label": "Library", "commandset":[
@@ -195,7 +196,39 @@
                     ]},                    
                     "BrowsePlayable": {"label": "Ready to play", "commandset":[
                         {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$ItemPlayableImage"},
-                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix$LibraryPlayableKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").type != \"track\") {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary} else {JSON.parse(\"$Result\").parentTitle}", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").thumb) {\"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"} else {\"$ItemPlayableImage\"}", "evalwrite": [{"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").parentTitle"}, {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}], "evalnext":[{"test":true, "then":"DetailView", "or":""}]}
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix$LibraryPlayableKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").type != \"track\") {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary} else {JSON.parse(\"$Result\").parentTitle}", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").thumb) {\"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"} else {\"$ItemPlayableImage\"}", 
+                            "evalwrite": [
+                                {"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                                {"variable": "SecondNavKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                                {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, 
+                                {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, 
+                                {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, 
+                                {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, 
+                                {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").parentTitle"}, 
+                                {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, 
+                                {"variable": "ItemAlbumImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""},
+                                {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}
+                                ], "evalnext":[
+                                    {"test":"DYNAMIK if (JSON.parse(\"$Result\").key.endsWith(\"children\")) {true;} else {false;}", "then":"Browse2Playable", "or":""}, 
+                                    {"test":"DYNAMIK if (!JSON.parse(\"$Result\").key.endsWith(\"children\")) {true;} else {false;}", "then":"DetailView", "or":""}
+                                ]}
+                    ]},
+                    "Browse2Playable": {"label": "Ready to play", "commandset":[
+                        {"type":"static", "command":".", "itemtype":"tile", "itemaction":"", "itemUI":"","itemimage":"$ItemAlbumImage"},
+                        {"type": "http-rest", "command":"{\"verb\":\"get\",\"call\":\"$PlexPrefix$SecondNavKey/all?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*","itemname": "DYNAMIK JSON.parse(\"$Result\").title", "itemlabel": "DYNAMIK if (JSON.parse(\"$Result\").type != \"track\") {JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary} else {JSON.parse(\"$Result\").parentTitle}", "itemaction": "", "itemimage": "DYNAMIK if (JSON.parse(\"$Result\").thumb) {\"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\"} else {\"$ItemPlayableImage\"}", 
+                            "evalwrite": [
+                                {"variable": "JustKey", "value": "DYNAMIK JSON.parse(\"$Result\").key"}, 
+                                {"variable": "ItemType", "value": "DYNAMIK JSON.parse(\"$Result\").type"}, 
+                                {"variable": "RatingKey", "value": "DYNAMIK JSON.parse(\"$Result\").ratingKey"}, 
+                                {"variable": "Offset", "value": "DYNAMIK let of = JSON.parse(\"$Result\").viewOffset; of ? of : 0;"}, 
+                                {"variable": "ItemTitle", "value": "DYNAMIK JSON.parse(\"$Result\").title"}, 
+                                {"variable": "ItemTagLine", "value": "DYNAMIK JSON.parse(\"$Result\").parentTitle"}, 
+                                {"variable": "ItemSummary", "value": "DYNAMIK JSON.parse(\"$Result\").summary"}, 
+                                {"variable": "ItemDetailImage", "value": "DYNAMIK \"$PlexPrefix\" + JSON.parse(\"$Result\").thumb + \"?$PlexSuffix\""}
+                                ], "evalnext":[
+                                    {"test":"DYNAMIK if (JSON.parse(\"$Result\").key.endsWith(\"children\")) {true;} else {false;}", "then":"BrowsePlayable", "or":""}, 
+                                    {"test":"DYNAMIK if (!JSON.parse(\"$Result\").key.endsWith(\"children\")) {true;} else {false;}", "then":"DetailView", "or":""}
+                                ]}
                     ]},
                     "DetailView": {"label": "$ItemTitle", "commandset":[
                         {"type":"static", "command":".", "itemtype":"tile", "itemaction":"Set", "itemUI":"","itemimage":"$ItemDetailImage"},
