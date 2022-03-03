@@ -2,7 +2,7 @@
     "name": "Plex",
     "manufacturer": "Plex",
     "type": "AUDIO",
-    "version": 2,
+    "version": 3,
     "persistedvariables":{
         "PlexToken": "",
         "MyPlex": "",
@@ -124,7 +124,8 @@
             "CURSOR DOWN": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/moveDown?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=$PlexProtocol&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexClientDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "CURSOR ENTER": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/select?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=$PlexProtocol&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexClientDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "BACK": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/navigation/back?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&protocol=$PlexProtocol&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexClientDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},      
-
+            "STEP FORWARD": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/playback/stepForward?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&type=video&protocol=$PlexProtocol&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexClientDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
+            "STEP BACK": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexClientPrefix/player/playback/stepBack?address=$PlexIp&port=$PlexPort&machineIdentifier=$ServerId&type=video&protocol=$PlexProtocol&commandID=$CommandId&$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\", \"X-Plex-Target-Client-Identifier\":\"$ClientId\", \"X-Plex-Client-Identifier\":\"meta\", \"X-Plex-Device-Name\":\"$PlexClientDeviceName\"}}", "evalwrite":[{"variable":"CommandId","value":"DYNAMIK Number($CommandId)+1"}]},
             "GETPLAYEDDATA": {"label": "", "type": "http-rest", "command": "{\"verb\":\"get\",\"call\":\"$PlexPrefix$PlayedKey?$PlexSuffix\", \"headers\":{\"Accept\":\"application/json\"}}", "queryresult": "$.MediaContainer.Metadata.*", "evalwrite":[
                 {"variable":"DisplayedPlayed","value":"DYNAMIK let beg = JSON.parse(\"$Result\").title + \" - \"; let end = (JSON.parse(\"$Result\").type != \"track\") ? (JSON.parse(\"$Result\").tagline?JSON.parse(\"$Result\").tagline:JSON.parse(\"$Result\").summary) : JSON.parse(\"$Result\").grandparentTitle; beg + end;"},
                 {"variable":"DisplayedImage","value":"DYNAMIK \"$PlexPrefix/photo/:/transcode?width=160&height=160&minSize=1&upscale=1&url=\" + JSON.parse(\"$Result\").thumb + \"&$PlexSuffix\""}
