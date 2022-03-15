@@ -10,6 +10,7 @@ When you install, a security will be asked to you.
 ### 3 - Copy paste the whole url as your security code
 ### 4 - All your plex clients will be detected, just choose the plex client you want to use.
 
+## below section is specific for plex server with https connections
 
 ## Neeo Brain with new Let's Encrypt certificates
 
