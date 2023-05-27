@@ -9,8 +9,14 @@ When you install, a security will be asked to you.
 ### 2 - Browse to a library item and view the XML for it (detailled info on how to do is here https://support.plex.tv/articles/201998867-investigate-media-information-and-formats/ it is very easy, just matter of clicking on the getinfo button)
 ### 3 - Copy paste the whole url as your security code
 ### 4 - All your plex clients will be detected, just choose the plex client you want to use.
+.
 
 CONGRATULATION, YOU ARE DONE !
+.
+.
+.
+.
+.
 
 
 
