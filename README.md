@@ -20,16 +20,7 @@ CONGRATULATION, YOU ARE DONE !
 
 
 
-
-
-
-
 # below section is specific for plex server with https connections
-
-
-
-
-
 
 ## Neeo Brain with new Let's Encrypt certificates
 
